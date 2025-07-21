@@ -1,9 +1,5 @@
 defaultProject: time-466515
-<<<<<<< HEAD
 defaultLocation: US
-=======
-defaultLocation: asia-southeast1
->>>>>>> refs/heads/main
 defaultDataset: dataform
 defaultAssertionDataset: dataform_assertions
 dataformCoreVersion: 3.0.0
