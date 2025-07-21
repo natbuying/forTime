@@ -1,7 +1,7 @@
 config { 
   type: "table",
   schema: "staging",
-  description: "Clean and standardized taxi trip data with derived metrics",
+  description: "Clean taxi trip data",
   bigquery: { 
         partitionBy: "trip_date",
             clusterBy: ["taxi_id"] } 
