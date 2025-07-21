@@ -32,7 +32,19 @@ SELECT
   DATE(trip_start_timestamp) AS trip_date,
   EXTRACT(HOUR FROM trip_start_timestamp) AS trip_hour,-- get nearest hour time of ride
   EXTRACT(DAYOFWEEK FROM trip_start_timestamp) AS trip_day_of_week,
-  EXTRACT(DAYOFWEEK FROM trip_start_timestamp) IN (1,7) AS is_weekend
+  EXTRACT(DAYOFWEEK FROM trip_start_timestamp) IN (1,7) AS is_weekend,
+
+  CASE 
+    WHEN fare > 0 THEN SAFE_DIVIDE(tips, fare) * 100 -- use safe_divide to cater for 0 fares
+    ELSE NULL 
+  END as tip_rate, -- percentage of tips over fare
+  
+  CASE 
+    WHEN trip_seconds > 0 AND trip_miles > 0 
+    THEN (trip_miles / trip_seconds) * 3600
+    ELSE NULL 
+  END as avg_speed_mph
+
 FROM
   ${ref("taxi_trips")}
 WHERE 
