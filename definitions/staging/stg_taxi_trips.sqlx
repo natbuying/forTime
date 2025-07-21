@@ -1,0 +1,46 @@
+config { 
+type: "table",
+  schema: "staging",
+  description: "Clean and standardized taxi trip data with derived metrics",
+  bigquery: { 
+        partitionBy: "trip_date",
+            clusterBy: ["taxi_id"] } 
+}
+
+SELECT
+  unique_key AS trip_id,
+  taxi_id,
+  trip_start_timestamp,
+  trip_end_timestamp,
+  trip_seconds,
+  trip_miles,
+  pickup_community_area,
+  dropoff_community_area,
+  fare,
+  tips,
+  tolls,
+  extras,
+  trip_total,
+  payment_type,
+  company,
+  pickup_latitude,
+  pickup_longitude,
+  dropoff_latitude,
+  dropoff_longitude,
+
+  -- create date/time fields
+  DATE(trip_start_timestamp) AS trip_date,
+  EXTRACT(HOUR FROM trip_start_timestamp) AS trip_hour,-- get nearest hour time of ride
+  EXTRACT(DAYOFWEEK FROM trip_start_timestamp) AS trip_day_of_week,
+  EXTRACT(DAYOFWEEK FROM trip_start_timestamp) IN (1,7) AS is_weekend
+FROM
+  ${ref("taxi_trips")}
+WHERE 
+  trip_start_timestamp >= '2022-01-01' -- assumption: using only data from last 3 years
+  AND trip_start_timestamp IS NOT NULL
+  AND trip_end_timestamp IS NOT NULL
+  AND taxi_id IS NOT NULL
+  AND fare >= 0
+  AND tips >= 0
+  AND trip_seconds > 0
+  AND trip_miles > 0
