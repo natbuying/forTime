@@ -1,0 +1,77 @@
+config {
+  type: "table",
+  schema: "staging",
+  description: "Driver shift patterns and work schedules",
+  bigquery: {
+    partitionBy: "shift_start_date",
+    clusterBy: ["taxi_id"]
+  }
+}
+
+WITH trip_seq AS (
+    SELECT
+      taxi_id,
+      trip_start_timestamp,
+      trip_end_timestamp,
+      DATE(trip_start_timestamp) as trip_start_date,
+      LAG(trip_end_timestamp) OVER (
+        PARTITION BY taxi_id
+        ORDER BY trip_start_timestamp
+      ) AS prev_trip_end_timestamp -- get end time for previous trip (start time for rest)
+    FROM ${ref("stg_taxi_trips")}
+),
+
+shift_gaps AS (
+  SELECT
+    taxi_id,
+    trip_start_timestamp,
+    trip_end_timestamp,
+    trip_start_date,
+    prev_trip_end_timestamp,
+    CASE WHEN prev_trip_end_timestamp IS NULL 
+      OR DATETIME_DIFF(trip_start_timestamp, prev_trip_end_timestamp, MINUTE) > 120 -- assumption: any break longer than 2 hours will be considered as a new shift
+      THEN 1
+     ELSE 0
+    END AS is_shift_start
+  FROM trip_seq
+),
+
+shift_groups AS (
+  SELECT 
+    *,
+    SUM(is_shift_start) OVER (
+      PARTITION BY taxi_id 
+      ORDER BY trip_start_timestamp 
+      ROWS UNBOUNDED PRECEDING --make unique id for each shift for ease of counting
+    ) as shift_group_id -- to count shifts for each taxi
+  FROM shift_gaps
+)
+
+SELECT
+  taxi_id,
+  shift_group_id,
+  DATE(MIN(trip_start_timestamp)) as shift_start_date,
+  MIN(trip_start_timestamp) as shift_start,
+  MAX(trip_end_timestamp) as shift_end,
+  DATETIME_DIFF(MAX(trip_end_timestamp), MIN(trip_start_timestamp), MINUTE) as shift_duration_mins,
+  COUNT(*) as trips_in_shift,
+
+  LAG(MAX(trip_end_timestamp)) OVER (
+    PARTITION BY taxi_id 
+    ORDER BY MIN(trip_start_timestamp)
+  ) AS prev_shift_end_timestamp,
+
+  DATETIME_DIFF(
+    MIN(trip_start_timestamp),
+    LAG(MAX(trip_end_timestamp)) OVER (
+      PARTITION BY taxi_id 
+      ORDER BY MIN(trip_start_timestamp)
+    ),
+    MINUTE
+  ) as break_before_shift_mins
+
+FROM shift_groups
+GROUP BY taxi_id, shift_group_id
+
+
+
