@@ -37,4 +37,6 @@ jobs:
         run: dataform compile
 
       - name: Run Dataform actions
-        run: npx @dataform/cli run
+        run: |
+          echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > .df-credentials.json
+          npx @dataform/cli run
