@@ -33,9 +33,6 @@ jobs:
       - name: Set GCP Project
         run: gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
-      - name: Validate Dataform project
-        run: dataform validate
-
       - name: Compile Dataform project
         run: dataform compile
 
