@@ -32,7 +32,7 @@ jobs:
           
       - name: Write Dataform credentials file
         run: |
-          printf '%s' "${{ secrets.DFCREDENTIALS }}" > .df-credentials.json
+          printf '%s' "${{ secrets.DATAFORMCREDENTIALS }}" > .df-credentials.json
 
       - name: Set GCP Project
         run: gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
