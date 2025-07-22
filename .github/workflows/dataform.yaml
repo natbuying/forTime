@@ -1,0 +1,49 @@
+name: Dataform CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Validate & Deploy Dataform
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Dataform CLI
+        run: npm install -g @dataform/cli
+
+      - name: Authenticate with GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          
+      - name: Set GCP Project
+        run: gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Set up Dataform credentials
+        run: |
+          cat > .df-credentials.json << EOF
+          {
+            "projectId": "${{ secrets.GCP_PROJECT_ID }}",
+            "location": "${{ secrets.GCP_LOCATION }}"
+          }
+          EOF
+
+      - name: Compile Dataform project
+        run: dataform compile
+
+      - name: Run Dataform actions
+        run: npx @dataform/cli run
