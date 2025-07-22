@@ -38,8 +38,7 @@ jobs:
           cat > .df-credentials.json << EOF
           {
             "projectId": "${{ secrets.GCP_PROJECT_ID }}",
-            "location": "${{ secrets.GCP_LOCATION }}",
-            "oauth2AccessToken": ""
+            "location": "${{ secrets.GCP_LOCATION }}"
           }
           EOF
 
