@@ -33,10 +33,18 @@ jobs:
       - name: Set GCP Project
         run: gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
+      - name: Set up Dataform credentials
+        run: |
+          cat > .df-credentials.json << EOF
+          {
+            "projectId": "${{ secrets.GCP_PROJECT_ID }}",
+            "location": "${{ secrets.GCP_LOCATION }}",
+            "oauth2AccessToken": ""
+          }
+          EOF
+
       - name: Compile Dataform project
         run: dataform compile
 
       - name: Run Dataform actions
-        run: |
-          echo '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}' > .df-credentials.json
-          npx @dataform/cli run
+        run: npx @dataform/cli run
