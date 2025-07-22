@@ -30,10 +30,6 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
           
-      - name: Write Dataform credentials file
-        run: |
-          printf '%s' "${{ secrets.DATAFORMCREDENTIALS }}" > .df-credentials.json
-
       - name: Set GCP Project
         run: gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
 
@@ -41,4 +37,4 @@ jobs:
         run: dataform compile
 
       - name: Run Dataform actions
-        run: dataform run
+        run: npx @dataform/cli run
