@@ -1,0 +1,51 @@
+config {
+  type: "table",
+  schema: "datamart",
+  description: "Top 100 taxi IDs by tip earnings in the last 3 months"
+}
+
+WITH max_date AS (
+  SELECT 
+    MAX(DATE(trip_start_timestamp)) AS max_date_end
+  FROM ${ref("stg_taxi_trips")}
+),
+
+last_3m AS (
+  SELECT 
+    DATE_SUB(max_date_end, INTERVAL 3 MONTH) AS period_start,
+    max_date_end AS period_end
+  FROM max_date
+),
+
+tip_metrics AS (
+  SELECT 
+    t.taxi_id,
+    SUM(t.tips) as total_tips,
+    COUNT(*) as total_trips,
+    AVG(t.tips) as avg_tip_per_trip,
+    AVG(t.tip_rate) as avg_tip_rate_percent,
+    SUM(t.fare) as total_fare,
+    SUM(t.trip_seconds) / 3600 as total_hours_worked,
+    SAFE_DIVIDE(SUM(t.tips), SUM(t.trip_seconds) / 3600) as tips_per_hour
+  FROM ${ref("stg_taxi_trips")} t
+  CROSS JOIN last_3m p
+  WHERE t.trip_date BETWEEN p.period_start AND p.period_end
+    AND t.tips > 0  -- Only trips with tips
+  GROUP BY t.taxi_id
+  HAVING total_trips >= 50  -- assumption: minimum trip threshold is at least 50 trips
+)
+
+SELECT 
+  ROW_NUMBER() OVER (ORDER BY total_tips DESC) as rank,
+  taxi_id,
+  ROUND(total_tips, 2) as total_tips,
+  total_trips,
+  ROUND(avg_tip_per_trip, 2) as avg_tip_per_trip,
+  ROUND(avg_tip_rate_percent, 2) as tip_rate_percent,
+  ROUND(total_fare, 2) as total_fare,
+  ROUND(tips_per_hour, 2) as earnings_per_hour,
+  (SELECT period_start FROM last_3m) as analysis_period_start,
+  (SELECT period_end FROM last_3m) as analysis_period_end
+FROM tip_metrics
+ORDER BY total_tips DESC
+LIMIT 100
