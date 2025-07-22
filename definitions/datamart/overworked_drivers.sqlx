@@ -1,0 +1,84 @@
+config {
+    type: "table",
+    schema: "datamart",
+    description: "Top 100 Overworked drivers based on shift patterns"
+}
+
+WITH overwork_analysis AS (
+  SELECT 
+    s.taxi_id,
+    COUNT(*) as total_shifts,
+    SUM(CASE WHEN s.shift_duration_mins > 
+    ( 12 -- assumption that 12hours is overwork threshold
+    * 60) THEN 1 ELSE 0 END) as long_shifts,
+    AVG(s.shift_duration_mins / 60) as avg_shift_hours,
+    SUM(CASE WHEN s.break_before_shift_mins < 
+    ( 8 -- assumption that 8 hours is the minimum break hours 
+    * 60) 
+             AND s.break_before_shift_mins IS NOT NULL THEN 1 ELSE 0 END) as insufficient_breaks,
+    SUM(s.shift_duration_mins / 60) as total_work_hours,
+    COUNT(DISTINCT s.shift_start_date) as active_days
+  FROM ${ref("stg_driver_shifts")} s
+  WHERE s.shift_start_date >= DATE_SUB(DATE('2023-12-31'), INTERVAL 6 MONTH)
+  GROUP BY s.taxi_id
+  HAVING total_shifts >= 20  -- Minimum shifts for analysis
+),
+
+consecutive_work_patterns AS (
+  SELECT 
+    taxi_id,
+    MAX(consecutive_days) as max_consecutive_work_days
+  FROM (
+    SELECT 
+      taxi_id,
+      COUNT(*) as consecutive_days
+    FROM (
+      SELECT 
+        taxi_id,
+        shift_start_date,
+        ROW_NUMBER() OVER (PARTITION BY taxi_id ORDER BY shift_start_date) as rn,
+        DATE_SUB(shift_start_date, INTERVAL ROW_NUMBER() OVER (PARTITION BY taxi_id ORDER BY shift_start_date) DAY) as group_date
+      FROM ${ref("stg_driver_shifts")}
+      WHERE shift_start_date >= DATE_SUB(DATE('2023-12-31'), INTERVAL 6 MONTH)
+    )
+    GROUP BY taxi_id, group_date
+  )
+  GROUP BY taxi_id
+),
+
+overwork_scoring AS (
+  SELECT 
+    o.taxi_id,
+    o.long_shifts as total_long_shifts,
+    o.avg_shift_hours as avg_shift_duration_hours,
+    o.insufficient_breaks as insufficient_break_count,
+    COALESCE(c.max_consecutive_work_days, 0) as consecutive_work_days,
+    o.total_work_hours,
+    SAFE_DIVIDE(o.total_work_hours, o.active_days) as avg_daily_hours,
+    
+    -- create overwork score system (higher = more overworked)
+    (
+      (o.long_shifts / NULLIF(o.total_shifts, 0)) * 30 +  -- Long shift frequency (max 30 points)
+      LEAST(o.avg_shift_hours - 8, 10) * 2 +              -- Excessive average hours (max 20 points) 
+      (o.insufficient_breaks / NULLIF(o.total_shifts - 1, 0)) * 25 + -- Insufficient break frequency (max 25 points)
+      LEAST(COALESCE(c.max_consecutive_work_days, 0) - 5, 10) * 2.5  -- Consecutive work days penalty (max 25 points)
+    ) as overwork_score
+    
+  FROM overwork_analysis o
+  LEFT JOIN consecutive_work_patterns c ON o.taxi_id = c.taxi_id
+)
+
+SELECT 
+  ROW_NUMBER() OVER (ORDER BY overwork_score DESC) as rank,
+  taxi_id,
+  ROUND(overwork_score, 2) as overwork_score,
+  total_long_shifts,
+  ROUND(avg_shift_duration_hours, 2) as avg_shift_duration_hours,
+  insufficient_break_count,
+  consecutive_work_days,
+  ROUND(total_work_hours, 2) as total_work_hours,
+  ROUND(avg_daily_hours, 2) as avg_daily_hours
+FROM overwork_scoring
+WHERE overwork_score > 10  -- Filter for meaningfully overworked drivers
+ORDER BY overwork_score DESC
+LIMIT 100

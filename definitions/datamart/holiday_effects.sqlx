@@ -1,0 +1,74 @@
+config {
+  type: "table",
+  schema: "datamart", 
+  description: "Analysis of US federal holiday impact on taxi trip patterns",
+}
+
+WITH holiday_periods AS (
+  SELECT 
+    h.holiday_name,
+    h.holiday_date,
+    DATE_SUB(h.holiday_date, INTERVAL 3 DAY) as period_start,   -- create 7 day window around each holiday (-3 to +3 days)
+    DATE_ADD(h.holiday_date, INTERVAL 3 DAY) as period_end,
+    EXTRACT(DAYOFWEEK FROM h.holiday_date) as holiday_weekday
+  FROM ${ref("stg_holidays")} h
+  WHERE h.holiday_date BETWEEN DATE_SUB('2023-12-31', INTERVAL 2 YEAR) 
+                          AND DATE_SUB('2023-12-31', INTERVAL 1 MONTH)
+),
+
+holiday_metrics AS (
+  SELECT 
+    hp.holiday_name,
+    hp.holiday_date,
+    hp.holiday_weekday,
+    COUNT(*) as holiday_period_trips,
+    AVG(t.fare) as avg_holiday_fare,
+    AVG(t.tips) as avg_holiday_tips
+  FROM holiday_periods hp
+  JOIN ${ref("stg_taxi_trips")} t 
+    ON t.trip_date BETWEEN hp.period_start AND hp.period_end
+  GROUP BY hp.holiday_name, hp.holiday_date, hp.holiday_weekday
+),
+
+baseline_metrics AS (
+  SELECT 
+    hm.holiday_name,
+    hm.holiday_date,
+    hm.holiday_weekday,
+    AVG(daily_trips) as baseline_avg_trips_per_day,
+    AVG(daily_avg_fare) as baseline_avg_fare,
+    AVG(daily_avg_tips) as baseline_avg_tips
+  FROM holiday_metrics hm
+  JOIN (
+    -- calculate daily averages for same weekday in non-holiday periods
+    SELECT 
+      DATE(trip_start_timestamp) as trip_date,
+      EXTRACT(DAYOFWEEK FROM trip_start_timestamp) as weekday,
+      COUNT(*) as daily_trips,
+      AVG(fare) as daily_avg_fare,
+      AVG(tips) as daily_avg_tips
+    FROM ${ref("stg_taxi_trips")}
+    WHERE DATE(trip_start_timestamp) NOT IN (
+      SELECT DATE_ADD(holiday_date, INTERVAL d DAY)
+      FROM ${ref("stg_holidays")}, UNNEST([-3,-2,-1,0,1,2,3]) as d -- create moving interval for 7 day holiday window
+    )
+    GROUP BY trip_date, weekday
+  ) baseline ON baseline.weekday = hm.holiday_weekday
+  GROUP BY hm.holiday_name, hm.holiday_date, hm.holiday_weekday
+)
+
+SELECT 
+  hm.holiday_name,
+  hm.holiday_date,
+  ROUND(bm.baseline_avg_trips_per_day, 0) as baseline_avg_trips,
+  hm.holiday_period_trips,
+  ROUND(
+    ((hm.holiday_period_trips / 7) - bm.baseline_avg_trips_per_day) / 
+    NULLIF(bm.baseline_avg_trips_per_day, 0) * 100, 2
+  ) as impact_percentage,
+  ROUND(hm.avg_holiday_fare - bm.baseline_avg_fare, 2) as avg_fare_change,
+  ROUND(hm.avg_holiday_tips - bm.baseline_avg_tips, 2) as avg_tip_change
+FROM holiday_metrics hm
+JOIN baseline_metrics bm ON hm.holiday_name = bm.holiday_name 
+  AND hm.holiday_date = bm.holiday_date
+ORDER BY ABS(impact_percentage) DESC
