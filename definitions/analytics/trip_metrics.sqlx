@@ -1,0 +1,51 @@
+config {
+  type: "table",
+  schema: "analytics", 
+  description: "Trip metrics and calculations ready for analysis",
+  bigquery: {
+    partitionBy: "trip_date",
+    clusterBy: ["taxi_id"]
+  }
+}
+
+SELECT 
+  T.*,
+  -- categorize time of day
+  CASE 
+    WHEN trip_hour BETWEEN 6 AND 9 THEN 'Morning Rush'
+    WHEN trip_hour BETWEEN 10 AND 15 THEN 'Midday' 
+    WHEN trip_hour BETWEEN 16 AND 19 THEN 'Evening Rush'
+    WHEN trip_hour BETWEEN 20 AND 23 THEN 'Evening'
+    ELSE 'Night/Early Morning'
+  END as time_period,
+  
+  -- distance categories
+  CASE 
+    WHEN trip_miles <= 2 THEN 'Short (0-2 miles)'
+    WHEN trip_miles <= 5 THEN 'Medium (2-5 miles)'
+    WHEN trip_miles <= 10 THEN 'Long (5-10 miles)' 
+    ELSE 'Very Long (10+ miles)'
+  END as distance_category,
+  
+  -- get revenue per distance and time
+  SAFE_DIVIDE(trip_total, trip_miles) as revenue_per_mile,
+  SAFE_DIVIDE(trip_total, trip_seconds) * 3600 as revenue_per_hour,
+  
+  -- categorize the tippers
+  CASE 
+    WHEN tip_rate >= 20 THEN 'High Tipper'
+    WHEN tip_rate >= 15 THEN 'Good Tipper'
+    WHEN tip_rate >= 10 THEN 'Average Tipper'
+    WHEN tip_rate > 0 THEN 'Low Tipper'
+    ELSE 'No Tip'
+  END as tip_category,
+  
+  -- how fast are they going (assumption)
+  CASE 
+    WHEN avg_speed_mph > 25 THEN 'Fast'
+    WHEN avg_speed_mph > 15 THEN 'Normal'  
+    WHEN avg_speed_mph > 8 THEN 'Slow'
+    ELSE 'Very Slow'
+  END as speed_category
+
+FROM ${ref("stg_taxi_trips")} T

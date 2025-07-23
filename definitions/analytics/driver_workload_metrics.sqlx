@@ -1,0 +1,76 @@
+config {
+  type: "table",
+  schema: "analytics",
+  description: "Driver workload metrics",
+  bigquery: {
+    partitionBy: "shift_start_date", 
+    clusterBy: ["taxi_id"]
+  }
+}
+
+WITH shift_metrics AS (
+  SELECT 
+    S.*,
+    -- categorize shift length
+    CASE 
+      WHEN shift_duration_mins <= 480 THEN 'Short (≤8h)'
+      WHEN shift_duration_mins <= 600 THEN 'Normal (8-10h)'
+      WHEN shift_duration_mins <= 720 THEN 'Long (10-12h)'
+      ELSE 'Very Long (>12h)'
+    END as shift_length_category,
+    
+    -- categorize break duration
+    CASE 
+      WHEN break_before_shift_mins IS NULL THEN 'First Shift'
+      WHEN break_before_shift_mins >= 480 THEN 'Adequate Break (≥8h)'
+      WHEN break_before_shift_mins >= 360 THEN 'Short Break (6-8h)'  
+      WHEN break_before_shift_mins >= 240 THEN 'Minimal Break (4-6h)'
+      ELSE 'Insufficient Break (<4h)'
+    END as break_category,
+    
+    -- get shift efficiency
+    SAFE_DIVIDE(trips_in_shift, shift_duration_mins) * 60 as trips_per_hour,
+    
+    -- Weekly pattern analysis
+    EXTRACT(DAYOFWEEK FROM shift_start_date) as shift_day_of_week,
+    DATE_TRUNC(shift_start_date, WEEK) as shift_week
+    
+  FROM ${ref("stg_driver_shifts")} S
+),
+
+driver_weekly_patterns AS (
+  SELECT 
+    taxi_id,
+    shift_week,
+    COUNT(*) as shifts_per_week,
+    SUM(shift_duration_mins) / 60 as total_weekly_hours,
+    AVG(shift_duration_mins) / 60 as avg_shift_hours,
+    SUM(trips_in_shift) as total_weekly_trips,
+    
+    -- count consecutive days
+    COUNT(DISTINCT shift_start_date) as active_days_per_week,
+    
+    -- assumption: insufficient break if less than 4 hours  
+    SUM(CASE WHEN break_category = 'Insufficient Break (<4h)' THEN 1 ELSE 0 END) as insufficient_breaks_per_week
+    
+  FROM shift_metrics
+  GROUP BY taxi_id, shift_week
+)
+
+SELECT 
+  sm.*,
+  wp.shifts_per_week,
+  wp.total_weekly_hours,
+  wp.avg_shift_hours,
+  wp.active_days_per_week,
+  wp.insufficient_breaks_per_week,
+  
+  -- get risk of burnout
+  CASE 
+    WHEN wp.total_weekly_hours > 60 AND wp.insufficient_breaks_per_week >= 2 THEN 'High Overwork Risk'
+    WHEN wp.total_weekly_hours > 50 OR wp.insufficient_breaks_per_week >= 1 THEN 'Medium Overwork Risk'  
+    ELSE 'Low Overwork Risk'
+  END as overwork_risk_level
+
+FROM shift_metrics sm
+LEFT JOIN driver_weekly_patterns wp ON sm.taxi_id = wp.taxi_id AND sm.shift_week = wp.shift_week
