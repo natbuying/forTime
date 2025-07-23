@@ -13,7 +13,7 @@ WITH trip_seq AS (
       taxi_id,
       trip_start_timestamp,
       trip_end_timestamp,
-      DATE(trip_start_timestamp) as trip_start_date,
+      DATE(trip_start_timestamp) as trip_date,
       LAG(trip_end_timestamp) OVER (
         PARTITION BY taxi_id
         ORDER BY trip_start_timestamp
@@ -26,7 +26,7 @@ shift_gaps AS (
     taxi_id,
     trip_start_timestamp,
     trip_end_timestamp,
-    trip_start_date,
+    trip_date,
     prev_trip_end_timestamp,
     CASE WHEN prev_trip_end_timestamp IS NULL 
       OR DATETIME_DIFF(trip_start_timestamp, prev_trip_end_timestamp, MINUTE) > 120 -- assumption: any break longer than 2 hours will be considered as a new shift

@@ -1,0 +1,88 @@
+config {
+  type: "table",
+  schema: "analytics",
+  description: "Holiday analysis comparing to baseline performance"
+}
+
+WITH date_classifications AS (
+  SELECT 
+    trip_date,
+    EXTRACT(DAYOFWEEK FROM trip_date) as day_of_week,
+    EXTRACT(MONTH FROM trip_date) as trip_month,
+    h.holiday_name,
+
+    -- get holiday period
+    CASE 
+      WHEN trip_date IN (SELECT holiday_date FROM ${ref("stg_holidays")}) THEN 'Holiday'
+      WHEN trip_date IN (
+        SELECT DATE_ADD(holiday_date, INTERVAL d DAY)
+        FROM ${ref("stg_holidays")}, UNNEST([-3, -2, -1, 1, 2, 3]) as d  
+      ) THEN 'Holiday Period'
+      ELSE 'Normal'
+    END as holiday_classification
+    
+  FROM (
+    SELECT DISTINCT trip_date 
+    FROM ${ref("stg_taxi_trips")}
+  ) dates
+  LEFT JOIN ${ref("stg_holidays")} h ON dates.trip_date = h.holiday_date
+),
+
+daily_trip_stats AS (
+  SELECT 
+    t.trip_date,
+    dc.day_of_week,
+    dc.trip_month, 
+    dc.holiday_classification,
+    dc.holiday_name,
+    
+    COUNT(*) as daily_trips,
+    AVG(t.fare) as avg_daily_fare,
+    AVG(t.tips) as avg_daily_tips,
+    AVG(t.trip_total) as avg_daily_total,
+    SUM(t.trip_total) as total_daily_revenue,
+    
+    -- Time distribution
+    AVG(CASE WHEN tm.time_period = 'Morning Rush' THEN 1 ELSE 0 END) as morning_rush_pct,
+    AVG(CASE WHEN tm.time_period = 'Evening Rush' THEN 1 ELSE 0 END) as evening_rush_pct,
+    
+    -- Geographic distribution  
+    COUNT(DISTINCT t.pickup_community_area) as unique_pickup_areas,
+    
+    -- Service quality
+    AVG(t.tip_rate) as avg_tip_rate
+
+  FROM ${ref("stg_taxi_trips")} t
+  JOIN ${ref("trip_metrics")} tm ON t.trip_id = tm.trip_id  
+  JOIN date_classifications dc ON t.trip_date = dc.trip_date
+  GROUP BY t.trip_date, dc.day_of_week, dc.trip_month, dc.holiday_classification, dc.holiday_name
+),
+
+baseline_comparisons AS (
+  SELECT 
+    day_of_week,
+    trip_month,
+    AVG(CASE WHEN holiday_classification = 'Normal' THEN daily_trips END) as baseline_avg_trips,
+    AVG(CASE WHEN holiday_classification = 'Normal' THEN avg_daily_fare END) as baseline_avg_fare,
+    AVG(CASE WHEN holiday_classification = 'Normal' THEN avg_daily_tips END) as baseline_avg_tips,
+    AVG(CASE WHEN holiday_classification = 'Normal' THEN total_daily_revenue END) as baseline_daily_revenue
+  FROM daily_trip_stats  
+  GROUP BY day_of_week, trip_month
+)
+
+SELECT 
+  dts.*,
+  bc.baseline_avg_trips,
+  bc.baseline_avg_fare, 
+  bc.baseline_avg_tips,
+  bc.baseline_daily_revenue,
+  
+  -- Impact calculations
+  SAFE_DIVIDE(dts.daily_trips - bc.baseline_avg_trips, bc.baseline_avg_trips) * 100 as trip_volume_impact_pct,
+  SAFE_DIVIDE(dts.avg_daily_fare - bc.baseline_avg_fare, bc.baseline_avg_fare) * 100 as fare_impact_pct,
+  SAFE_DIVIDE(dts.avg_daily_tips - bc.baseline_avg_tips, bc.baseline_avg_tips) * 100 as tip_impact_pct,
+  SAFE_DIVIDE(dts.total_daily_revenue - bc.baseline_daily_revenue, bc.baseline_daily_revenue) * 100 as revenue_impact_pct
+
+FROM daily_trip_stats dts
+LEFT JOIN baseline_comparisons bc ON dts.day_of_week = bc.day_of_week AND dts.trip_month = bc.trip_month
+WHERE dts.holiday_classification != 'Normal'  -- Focus on holiday-related periods
