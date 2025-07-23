@@ -11,7 +11,7 @@ WITH date_classifications AS (
     EXTRACT(MONTH FROM trip_date) as trip_month,
     h.holiday_name,
 
-    -- get holiday period
+    -- get holiday period for real
     CASE 
       WHEN trip_date IN (SELECT holiday_date FROM ${ref("stg_holidays")}) THEN 'Holiday'
       WHEN trip_date IN (
