@@ -20,6 +20,7 @@ last_3m AS (
 tip_metrics AS (
   SELECT 
     t.taxi_id,
+    t.company,
     SUM(t.tips) as total_tips,
     COUNT(*) as total_trips,
     AVG(t.tips) as avg_tip_per_trip,
@@ -30,14 +31,14 @@ tip_metrics AS (
   FROM ${ref("stg_taxi_trips")} t
   CROSS JOIN last_3m p
   WHERE t.trip_date BETWEEN p.period_start AND p.period_end
-    AND t.tips > 0  -- Only trips with tips
-  GROUP BY t.taxi_id
-  HAVING total_trips >= 50  -- assumption: minimum trip threshold is at least 50 trips
+    AND t.tips > 0  -- only taking trips with tips
+  GROUP BY t.taxi_id, t.company
 )
 
 SELECT 
   ROW_NUMBER() OVER (ORDER BY total_tips DESC) as rank,
   taxi_id,
+  company,
   ROUND(total_tips, 2) as total_tips,
   total_trips,
   ROUND(avg_tip_per_trip, 2) as avg_tip_per_trip,

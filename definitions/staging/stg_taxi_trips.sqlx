@@ -31,6 +31,16 @@ SELECT
   -- create date/time fields
   DATE(trip_start_timestamp) AS trip_date,
   EXTRACT(HOUR FROM trip_start_timestamp) AS trip_hour,-- get nearest hour time of ride
+  
+  CONCAT(
+    CAST(EXTRACT(YEAR FROM trip_start_timestamp) AS STRING), 
+    ' - ', 
+    LPAD(CAST(EXTRACT(MONTH FROM trip_start_timestamp) AS STRING), 2, '0'), 
+    ' (', 
+    FORMAT_DATE('%B', PARSE_DATE('%m-%Y', CONCAT(CAST(EXTRACT(MONTH FROM trip_start_timestamp) AS STRING), '-', CAST(EXTRACT(YEAR FROM trip_start_timestamp) AS STRING)))), 
+    ')'
+  ) AS trip_month, --create sortable trip month column
+
   EXTRACT(DAYOFWEEK FROM trip_start_timestamp) AS trip_day_of_week,
   EXTRACT(DAYOFWEEK FROM trip_start_timestamp) IN (1,7) AS is_weekend,
 
