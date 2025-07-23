@@ -21,6 +21,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18'
+          
+      - name: SQL Linting
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+        run: |
+          npm install -g sqlfluff 
+          sqlfluff lint --dialect bigquery ${{ secrets.GCP_PROJECT_ID }}/definitions
 
       - name: Install Dataform CLI
         run: npm install -g @dataform/cli
