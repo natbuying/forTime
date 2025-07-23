@@ -21,7 +21,7 @@ WITH overwork_analysis AS (
   FROM ${ref("stg_driver_shifts")} s
   WHERE s.shift_start_date >= DATE_SUB(DATE('2023-12-31'), INTERVAL 6 MONTH)
   GROUP BY s.taxi_id
-  HAVING total_shifts >= 20  -- Minimum shifts for analysis
+  HAVING total_shifts >= 20  -- at least having 20 shifts
 ),
 
 consecutive_work_patterns AS (
@@ -79,6 +79,5 @@ SELECT
   ROUND(total_work_hours, 2) as total_work_hours,
   ROUND(avg_daily_hours, 2) as avg_daily_hours
 FROM overwork_scoring
-WHERE overwork_score > 10  -- Filter for meaningfully overworked drivers
 ORDER BY overwork_score DESC
 LIMIT 100
