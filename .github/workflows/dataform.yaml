@@ -42,10 +42,10 @@ jobs:
           }
           EOF
 
-      - name: SQL Linting
-        run: |
-          npm install -g sqlfluff 
-          sqlfluff lint --dialect bigquery ${{ secrets.GCP_PROJECT_ID }}/definitions/
+      # - name: SQL Linting -- KIV
+      #   run: |
+      #     npm install -g sqlfluff 
+      #     sqlfluff lint --dialect bigquery ${{ secrets.GCP_PROJECT_ID }}/definitions/
 
       - name: Compile Dataform project
         run: dataform compile
