@@ -58,7 +58,7 @@ SELECT
 FROM
   ${ref("taxi_trips")}
 WHERE 
-  trip_start_timestamp >= '2021-01-01' -- assumption: using only data from the last 3 years
+  trip_start_timestamp >= '2022-01-01' -- assumption: using only data from 2022 and 2023
   AND trip_start_timestamp IS NOT NULL
   AND trip_end_timestamp IS NOT NULL
   AND taxi_id IS NOT NULL

@@ -1,0 +1,16 @@
+config {
+    type: "table",
+    schema: "datamart",
+    description: "Highlights pickup areas with consistently high average tip rates"
+}
+
+SELECT
+  pickup_community_area,
+  COUNT(*) AS trip_count,
+  SUM(tips) AS total_tips,
+  SUM(fare) AS total_fares,
+  AVG(tip_rate) AS avg_tip_rate
+FROM ${ref("stg_taxi_trips")} 
+GROUP BY pickup_community_area
+HAVING trip_count > 1000
+ORDER BY avg_tip_rate DESC
