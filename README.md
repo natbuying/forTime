@@ -79,25 +79,26 @@ timeDevUS/
 
 
 ##Analytical Questions & Methodology
-1.Top 100 taxi IDs by tip earnings in the last 3 months 
-Assumptions:
--Analysis period: Last 3 complete months from current date
--Tips include both cash and credit card tips
--Only completed trips with valid tip amounts considered
+
+1. Top 100 taxi IDs by tip earnings in the last 3 months 
+    Assumptions:
+    - Analysis period: Last 3 complete months from current date
+    - Tips include both cash and credit card tips
+    - Only completed trips with valid tip amounts considered
 
 2. Top 100 Overworked drivers based on shift patterns
-Assumptions:
--Minimum 8-hour break required between shifts
--Shift defined as continuous period of activity within 2 hour gaps
--Long shift (overwork) threshold: >12 hours
--Regular overwork: >3 long shifts per week for 4+ weeks
--Analysis covers last 6 months for better identification
+    Assumptions:
+    - Minimum 8-hour break required between shifts
+    - Shift defined as continuous period of activity within 2 hour gaps
+    - Long shift (overwork) threshold: >12 hours
+    - Regular overwork: >3 long shifts per week for 4+ weeks
+    - Analysis covers last 6 months for better identification
 
 3. Holiday Impact Analysis
-Assumptions:
--Considering only US Federal holidays
--Impact period: 3 days before and after each holiday
--Baseline: Average of same weekdays in non-holiday periods
+    Assumptions:
+    - Considering only US Federal holidays
+    - Impact period: 3 days before and after each holiday
+    - Baseline: Average of same weekdays in non-holiday periods
 
 4. Additional Insights
 Insight 1: Peak earning hours
