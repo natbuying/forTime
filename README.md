@@ -1,5 +1,16 @@
 # forTime
 
+## Project Overview
+This project analyzes Chicago taxi trip data using GCP's Dataform to build a comprehensive data pipeline and analytics solution.
+The project transforms raw taxi trip data into actionable insights about driver performance, operational patterns, and business opportunities.
+The findings and visualisations will be build in Looker Studio.
+
+## Setup Instuctions
+Prerequisites
+1.Google Cloud Platform account with billing enabled
+2.BigQuery API enabled
+3.Dataform service enabled
+4.Access to bigquery-public-data.chicago_taxi_trips.taxi_trips dataset
 
 ## Project Structure
 
