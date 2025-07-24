@@ -1,0 +1,14 @@
+config {
+    type: "table",
+    schema: "datamart",
+    description: "Identify which hours in the day have the highest avg tip rates"
+}
+    SELECT
+    trip_hour,
+    AVG(tip_rate) AS avg_tip_rate,
+    SUM(fare) AS total_fares,
+    SUM(tips) AS total_tips,
+    COUNT( * ) AS trip_count
+    FROM ${ref("stg_taxi_trips")}
+    GROUP BY trip_hour
+    ORDER BY avg_tip_rate DESC

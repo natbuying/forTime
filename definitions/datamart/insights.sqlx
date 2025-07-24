@@ -1,8 +1,9 @@
 config {
   type: "table",
   schema: "datamart",
-  description: "Additional actionable business insights from taxi data analysis"
+  description: "Actionable business insights from taxi data analysis"
 }
+------- WIP ----------- pending statistical test
 
 WITH peak_demand_zones AS (
   -- Insight 1: Dynamic Pricing Opportunity Zones
@@ -13,7 +14,7 @@ WITH peak_demand_zones AS (
     COUNT(*) as hourly_demand,
     AVG(fare) as avg_fare,
     PERCENTILE_CONT(fare, 0.75) OVER (PARTITION BY pickup_community_area) as fare_75th_percentile,
-    -- Areas with high demand and potential for premium pricing
+    -- areas with high demand and potential for premium pricing
     CASE 
       WHEN COUNT(*) > 100 AND AVG(fare) > 15 THEN 'High Opportunity'
       WHEN COUNT(*) > 50 AND AVG(fare) > 12 THEN 'Medium Opportunity' 
@@ -22,7 +23,7 @@ WITH peak_demand_zones AS (
   FROM ${ref("stg_taxi_trips")}
   WHERE trip_date >= DATE_SUB(DATE('2023-12-31'), INTERVAL 3 MONTH)
     AND pickup_community_area IS NOT NULL
-    AND trip_hour BETWEEN 16 AND 20  -- Peak evening hours
+    AND trip_hour BETWEEN 16 AND 20  -- peak evening hours
   GROUP BY pickup_community_area, trip_hour
   HAVING COUNT(*) >= 20
 ),
@@ -56,11 +57,11 @@ driver_retention_risk AS (
     FROM ${ref("stg_taxi_trips")}
     WHERE trip_date >= DATE_SUB(DATE('2023-12-31'), INTERVAL 2 MONTH)
     GROUP BY taxi_id
-    HAVING prev_month_trips >= 20  -- Minimum activity threshold
+    HAVING prev_month_trips >= 20  -- minimum activity threshold (assumption)
   )
 ),
 
--- Combine insights for final output
+-- combine 2 insights
 pricing_summary AS (
   SELECT 
     insight_category,
@@ -89,7 +90,7 @@ retention_summary AS (
   GROUP BY insight_category, retention_risk_level
 )
 
--- Final combined insights
+-- combined insights
 SELECT 
   insight_category,
   insight_detail,
