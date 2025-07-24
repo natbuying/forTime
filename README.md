@@ -101,11 +101,11 @@ timeDevUS/
     - Baseline: Average of same weekdays in non-holiday periods
 
 4. Additional Insights
-Insight 1: Peak earning hours
-Business Value:  Enables drivers to optimize their work schedules by identifying high-demand time periods, potentially increasing hourly earnings by targeting peak revenue hours while reducing time spent in low-earning periods.
+    - Insight 1: Peak earning hours
+    - Business Value:  Enables drivers to optimize their work schedules by identifying high-demand time periods, potentially increasing hourly earnings by targeting peak revenue hours while reducing time spent in low-earning periods.
 
-Insight 2: Performing Areas
-Business Value: Helps drivers strategically position themselves in high-value pickup locations, reducing empty miles and wait times while maximizing trip frequency and fare amounts. Fleet operators can use this data for driver deployment and route optimization.
+    - Insight 2: Performing Areas
+    - Business Value: Helps drivers strategically position themselves in high-value pickup locations, reducing empty miles and wait times while maximizing trip frequency and fare amounts. Fleet operators can use this data for driver deployment and route optimization.
 
 ## Looker Studio Dashboard
 Dashboard Structure
@@ -117,14 +117,14 @@ Dashboard Structure
 
 ## Key Learning Points & Shortfalls
 - Learning Curve with New Technologies
-This project marked my first experience with Google Cloud Platform, requiring significant time investment in understanding core technologies like Dataform and BigQuery. The steepest learning curve involved project setup and configuration, particularly implementing GitHub CI/CD pipelines - another new technology in my toolkit. Much of the project timeline was dedicated to mastering these foundational elements rather than direct development work.
+    This project marked my first experience with Google Cloud Platform, requiring significant time investment in understanding core technologies like Dataform and BigQuery. The steepest learning curve involved project setup and configuration, particularly implementing GitHub CI/CD pipelines - another new technology in my toolkit. Much of the project timeline was dedicated to mastering these foundational elements rather than direct development work.
 
 - GitHub CI/CD Implementation Gaps
-As this was my first time setting up the CI/CD portion, I made a critical assumption about deployment processes without fully understanding how data pipelines are deployed within TIME's infrastructure. My GitHub Actions setup may have only addressed the CI (Continuous Integration) component rather than implementing a complete CI/CD workflow with proper deployment automation.
+    As this was my first time setting up the CI/CD portion, I made a critical assumption about deployment processes without fully understanding how data pipelines are deployed within TIME's infrastructure. My GitHub Actions setup may have only addressed the CI (Continuous Integration) component rather than implementing a complete CI/CD workflow with proper deployment automation.
 I would welcome the opportunity to learn from the team how this process is properly implemented in practice. Coming from a background focused primarily on building pipelines and analytics solutions, exposure to proper DevOps practices for data workflows would be a refreshing addition to my skillset.
 
 - Areas for Improvement with Additional Time
-Given more time, I would have invested greater effort into crafting more sophisticated metrics and visualizations for the analytical questions. The bonus insights section, in particular, has significant room for enhancement. While I included basic analyses like popular/performing areas and optimal driver times, I identified opportunities for more statistically rigorous metrics that would yield deeper insights.
+    Given more time, I would have invested greater effort into crafting more sophisticated metrics and visualizations for the analytical questions. The bonus insights section, in particular, has significant room for enhancement. While I included basic analyses like popular/performing areas and optimal driver times, I identified opportunities for more statistically rigorous metrics that would yield deeper insights.
 In my insights.sqlx file, there are two partially developed metrics that I began exploring but didn't feel confident completing within the given timeframe. These more complex analyses would likely provide more valuable business insights than the simpler location and timing metrics I ultimately delivered, but they required additional time for proper statistical tuning and validation.
 Additionally, I would have dedicated more effort to creating a more comprehensive and polished README file that better guides users through the project structure, setup process, and key findings.
 
