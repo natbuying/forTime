@@ -14,6 +14,7 @@ Prerequisites
 
 ## Project Structure
 
+```
 timeDevUS/
 ├── README.md
 ├── workflow_settings.yaml
@@ -40,4 +41,5 @@ timeDevUS/
 │       ├── holiday_metrics.sqlx
 │       └── trip_metrics.sqlx
 └── includes/
+```
 
