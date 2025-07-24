@@ -125,7 +125,7 @@ I would welcome the opportunity to learn from the team how this process is prope
 
 - Areas for Improvement with Additional Time :  
     Given more time, I would have invested greater effort into crafting more sophisticated metrics and visualizations for the analytical questions. The bonus insights section, in particular, has significant room for enhancement. While I included basic analyses like popular/performing areas and optimal driver times, I identified opportunities for more statistically rigorous metrics that would yield deeper insights.
-In my insights.sqlx file, there are two partially developed metrics that I began exploring but didn't feel confident completing within the given timeframe. These more complex analyses would likely provide more valuable business insights than the simpler location and timing metrics I ultimately delivered, but they required additional time for proper statistical tuning and validation.
+There are two partially developed metrics (Dynamic Pricing Opportunity Zones and Driver Retention Risk Analysis) that I began exploring but didn't feel confident completing within the given timeframe. These more complex analyses would likely provide more valuable business insights than the simpler location and timing metrics I ultimately delivered, but they required additional time for proper statistical tuning and validation.
 Additionally, I would have dedicated more effort to creating a more comprehensive and polished README file that better guides users through the project structure, setup process, and key findings.
 
 
