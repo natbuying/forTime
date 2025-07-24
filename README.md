@@ -15,12 +15,12 @@ The findings and visualisations will be build in Looker Studio. (https://lookers
 
 ## Setup Instuctions
 Prerequisites
-1.Google Cloud Platform account with billing enabled
-2.BigQuery API enabled
-3.Dataform service enabled
-4.Access to bigquery-public-data.chicago_taxi_trips.taxi_trips dataset
-5.Looker Studio access (optional, for dashboard viewing)
-6.GitHub repository with GitHub Actions enabled
+- Google Cloud Platform account with billing enabled
+- BigQuery API enabled
+- Dataform service enabled
+- Access to bigquery-public-data.chicago_taxi_trips.taxi_trips dataset
+- Looker Studio access (optional, for dashboard viewing)
+- GitHub repository with GitHub Actions enabled
 
 ## Installation
 1. Clone the repository
@@ -108,10 +108,23 @@ Business Value: Helps drivers strategically position themselves in high-value pi
 
 ## Looker Studio Dashboard
 Dashboard Structure
-1.Overview of Chicago Taxi Trips in 2023: Key Overview metrics and trends
-2.Performance for the Top 100 Tip Earners in the Q42023: Top earners and workload analysis
-3.Top 100 Overworked Drivers in 2H of 2023: Overworkers metrics and distributions
-3.Holiday Effectiveness in 2023: Holiday period Impact vs baseline performance
-4.Additional Insights: Actionable recommendations - Peak Hours for Drivers and Best performing Pickup Areas
+- Overview of Chicago Taxi Trips in 2023: Key Overview metrics and trends
+- Performance for the Top 100 Tip Earners in the Q42023: Top earners and workload analysis
+- Top 100 Overworked Drivers in 2H of 2023: Overworkers metrics and distributions
+- Holiday Effectiveness in 2023: Holiday period Impact vs baseline performance
+- Additional Insights: Actionable recommendations - Peak Hours for Drivers and Best performing Pickup Areas
+
+## Key Learning Points & Shortfalls
+- Learning Curve with New Technologies
+This project marked my first experience with Google Cloud Platform, requiring significant time investment in understanding core technologies like Dataform and BigQuery. The steepest learning curve involved project setup and configuration, particularly implementing GitHub CI/CD pipelines - another new technology in my toolkit. Much of the project timeline was dedicated to mastering these foundational elements rather than direct development work.
+
+- GitHub CI/CD Implementation Gaps
+As this was my first time setting up the CI/CD portion, I made a critical assumption about deployment processes without fully understanding how data pipelines are deployed within TIME's infrastructure. My GitHub Actions setup may have only addressed the CI (Continuous Integration) component rather than implementing a complete CI/CD workflow with proper deployment automation.
+I would welcome the opportunity to learn from the team how this process is properly implemented in practice. Coming from a background focused primarily on building pipelines and analytics solutions, exposure to proper DevOps practices for data workflows would be a refreshing addition to my skillset.
+
+- Areas for Improvement with Additional Time
+Given more time, I would have invested greater effort into crafting more sophisticated metrics and visualizations for the analytical questions. The bonus insights section, in particular, has significant room for enhancement. While I included basic analyses like popular/performing areas and optimal driver times, I identified opportunities for more statistically rigorous metrics that would yield deeper insights.
+In my insights.sqlx file, there are two partially developed metrics that I began exploring but didn't feel confident completing within the given timeframe. These more complex analyses would likely provide more valuable business insights than the simpler location and timing metrics I ultimately delivered, but they required additional time for proper statistical tuning and validation.
+Additionally, I would have dedicated more effort to creating a more comprehensive and polished README file that better guides users through the project structure, setup process, and key findings.
 
 
